@@ -109,6 +109,60 @@ public class DiscordManager {
         });
     }
 
+    public void sendUnknownReport(final Report report) {
+        final Webhook.WebhookBuilder builder = Webhook.builder();
+        final Webhook.EmbedObject embed = createEmbed(report);
+
+        final String prefix = report.getType().name().toUpperCase() + "_REPORT";
+
+        final String WEBHOOK_URI = MainConfig.Values.valueOf(prefix + "_DISCORD_WEBHOOK_URI").getString();
+
+        final boolean PING_ENABLED = MainConfig.Values.valueOf(prefix + "_DISCORD_PING_ENABLED").getBoolean();
+        final String PING_VALUE = MainConfig.Values.valueOf(prefix + "_DISCORD_PING_VALUE").getString();
+
+        final String MESSAGES_NEW_REPORT = MainConfig.Values.valueOf(prefix + "_MESSAGES_NEW_REPORT").getString();
+        final String MESSAGES_SUCCESS = MainConfig.Values.valueOf(prefix + "_MESSAGES_SUCCESS").getString();
+
+        if (WEBHOOK_URI.equalsIgnoreCase(MainConfig.Values.DEFAULT_URI)) {
+            final String message = Common.color("&cYou must change the webhook url in the config.yml in order for the webhook to be successfully sent to Discord. Should you require assistance, please join our Discord server: &nhttps://austech.dev/to/support/");
+            Common.log(message);
+
+        }
+
+        builder.url(WEBHOOK_URI);
+        builder.addEmbed(embed);
+
+        if (PING_ENABLED) {
+            builder.content(PING_VALUE);
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(BetterReports.getInstance(), () -> {
+            try {
+                final Webhook webhook = builder.build();
+                webhook.execute();
+
+                Arrays.stream(Common.color(PlaceholderUtil.applyPlaceholders(report, MESSAGES_NEW_REPORT)).split("\\n")).forEach((s) ->
+                        Bukkit.getOnlinePlayers()
+                                .stream()
+                                .filter(p -> p.hasPermission("betterreports.alerts"))
+                                .forEach(p -> p.sendMessage(s))
+                );
+
+                if (BetterReports.getInstance().getCounter() != null) {
+                    if (!report.isPlayer()) {
+                        BetterReports.getInstance().getCounter().incrementBug();
+                    } else {
+                        BetterReports.getInstance().getCounter().incrementPlayer();
+                    }
+                }
+            } catch (final Exception e) {
+                e.printStackTrace();
+                BetterReports.getInstance().getLogger().severe("This error generally indicates an incorrect setup. Please check your config.yml. If the issue persists, please join our Discord server: https://austech.dev/to/support/");
+
+            }
+        });
+    }
+
     private String ap(final Report report, final String s) {
         return PlaceholderUtil.applyPlaceholders(report, s);
     }

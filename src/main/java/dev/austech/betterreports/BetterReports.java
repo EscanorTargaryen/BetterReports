@@ -71,8 +71,8 @@ public class BetterReports extends JavaPlugin {
             usePlaceholderApi = true;
         }
 
-        new UpdateCheck("br", this).check();
-        new Metrics(this, 15884);
+       // new UpdateCheck("br", this).check();
+       // new Metrics(this, 15884);
 
         Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
 

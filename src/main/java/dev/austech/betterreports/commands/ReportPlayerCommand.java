@@ -24,17 +24,22 @@
 
 package dev.austech.betterreports.commands;
 
+import com.viaversion.viaversion.api.Via;
 import dev.austech.betterreports.model.report.Report;
 import dev.austech.betterreports.model.report.menu.creation.ConfirmReportMenu;
 import dev.austech.betterreports.model.report.menu.creation.SelectPlayerMenu;
 import dev.austech.betterreports.model.report.menu.creation.reason.PlayerReportPagedReasonMenu;
 import dev.austech.betterreports.util.config.impl.MainConfig;
+import dev.austech.betterreports.util.discord.DiscordManager;
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 import static dev.austech.betterreports.model.report.ReportManager.checkCooldown;
@@ -53,12 +58,38 @@ public class ReportPlayerCommand implements CommandExecutor {
         }
 
         if (!(sender instanceof Player)) {
-            MainConfig.Values.LANG_PLAYER_ONLY.send(sender);
+            final Player target = Bukkit.getPlayer(args[0]);
+            // MainConfig.Values.LANG_PLAYER_ONLY.send(sender);
+
+            if (target != null) {
+
+                /*
+                - %player_first_join_date%
+- %viaversion_player_protocol_version%
+- %player_ping%
+- %player_ip%
+- %player_uuid%
+                 */
+
+                String uuid = target.getUniqueId().toString();
+                String data = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String ip = target.getAddress().getHostString();
+                String version = com.viaversion.viaversion.api.protocol.version.ProtocolVersion.getProtocol(Via.getAPI().getPlayerVersion(target)).getName();
+
+
+                final Report report = Report.builder().type(Report.Type.PLAYER).creator(target).reason(String.join(" ", Arrays.asList(args).subList(1, args.length))
+                        .replace("%player_first_join_date%",data)
+                        .replace("%viaversion_player_protocol_version%",version)
+                        .replace("%player_ip%",ip)
+                        .replace("%player_uuid%",uuid)
+                ).target(target).build();
+                DiscordManager.getInstance().sendUnknownReport(report);
+            }
+
             return true;
         }
 
-        if (checkCooldown((Player) sender, Report.Type.PLAYER))
-            return true;
+        if (checkCooldown((Player) sender, Report.Type.PLAYER)) return true;
 
         if (args.length == 0) {
             if (MainConfig.Values.PLAYER_REPORT_MENUS_SELECT_PLAYER.getBoolean())
@@ -90,12 +121,7 @@ public class ReportPlayerCommand implements CommandExecutor {
             return true;
         }
 
-        final Report report = Report.builder()
-                .type(Report.Type.PLAYER)
-                .creator(((Player) sender))
-                .reason(String.join(" ", Arrays.asList(args).subList(1, args.length)))
-                .target(target)
-                .build();
+        final Report report = Report.builder().type(Report.Type.PLAYER).creator(((Player) sender)).reason(String.join(" ", Arrays.asList(args).subList(1, args.length))).target(target).build();
 
         if (MainConfig.Values.PLAYER_REPORT_MENUS_CONFIRM_REPORT.getBoolean())
             new ConfirmReportMenu(((Player) sender), report).open(((Player) sender));
@@ -104,4 +130,5 @@ public class ReportPlayerCommand implements CommandExecutor {
 
         return true;
     }
+
 }

@@ -41,6 +41,9 @@ repositories {
     maven {
         url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     }
+    maven {
+        url = uri("https://repo.viaversion.com")
+    }
 
     maven {
         url = uri("https://oss.sonatype.org/content/groups/public/")
@@ -60,6 +63,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.2")
     compileOnly("org.jetbrains:annotations:23.0.0")
     implementation("org.bstats:bstats-bukkit:3.0.0")
+    implementation("com.viaversion:viaversion-api:4.4.2")
 }
 
 

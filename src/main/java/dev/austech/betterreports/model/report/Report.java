@@ -49,6 +49,7 @@ public class Report {
     }
 
     public void save() {
+
         if (creator == getTarget()) {
             GuiConfig.Values.SOUNDS_SELF_REPORT.playSound(creator);
             MainConfig.Values.LANG_PLAYER_SELF.send(creator);
@@ -75,6 +76,7 @@ public class Report {
         ReportManager.getInstance().addCooldown(creator, type);
         DiscordManager.getInstance().sendReport(creator, this);
     }
+
 
     public static enum Type {
         BUG, PLAYER
